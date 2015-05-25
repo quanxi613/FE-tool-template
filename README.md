@@ -81,6 +81,10 @@ bower：web的包管理器
 
 此时项目下已生成项目目录
 
+<figure>
+	<img src="img/gulp-webapp.png" />
+</figure>
+
 按照项目习惯，将app下的styles改为css，scripts改为js，images改为img，.tmp下的styles改为css。此时别忘了修改`gulpfile.js`，修改后的文件如下：
 
 ```
@@ -234,6 +238,10 @@ app目录下的结构说明：
 `gulp serve`
 
 浏览器会自动打开app下的index.html，localhost：9000
+
+<figure>
+	<img src="img/gulp-index.png" />
+</figure>
 
 任何文件的改动都会自动刷新浏览器
 
