@@ -85,7 +85,15 @@ bower：web的包管理器
 	<img src="img/gulp-webapp.png" />
 </figure>
 
-按照项目习惯，将app下的styles改为css，scripts改为js，images改为img，.tmp下的styles改为css。此时别忘了修改`gulpfile.js`，修改后的文件如下：
+按照项目习惯，将app下的styles改为css，scripts改为js，images改为img，.tmp下的styles改为css。
+
+修改后的目录如下：
+
+<figure>
+	<img src="img/gulp-change.png" />
+</figure>
+
+此时别忘了修改`gulpfile.js`，修改后的文件如下：
 
 ```
 /*global -$ */
