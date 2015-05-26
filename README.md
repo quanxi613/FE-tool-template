@@ -93,11 +93,142 @@ bower：web的包管理器
 	<img src="img/gulp-change.png" />
 </figure>
 
-此时别忘了修改`gulpfile.js`，修改后的文件如下：
+此时别忘了修改`gulpfile.js`中的相应目录。最下面会给出最终的`gulpfile.js`文件内容。
+
+
+目录说明：
+
+- .tmp：临时目录
+- app：开发的源代码目录
+- bower_components：通过bower下载下来的包
+- dist：生成用于发布的项目
+- node_modules：nodejs依赖包
+- test：测试文件的目录
+- .bowerrc：bower属性
+- .editorconfig：对开发工具的属性配置
+- .gitattributes：git属性的配置
+- .gitignore：git管理文件的配置
+- .jshintrc：JSHint配置
+- bower.json：bower依赖管理
+- gulpfile.js：gulp开发过程管理
+- package.json：项目依赖文件
+
+app目录下的结构说明：
+
+- css: 存放css文件
+- font：存放字体资源
+- img：存放图片资源
+- js：存放js源文件
+- templates（自己添加）：存放模板文件
+
+##添加Handlebars作为JS模板引擎##
+
+###安装依赖###
+
+安装gulp插件
+
+`npm install --save-dev gulp-handlebars gulp-define-module gulp-declare`
+
+gulp-handlebars能够把`.hbs`模板预编译为JavaScript
+
+gulp-define-module和gulp-declare结合使用，将编译好的JavaScript模板打包到一个命名空间模型中去。
+
+用bower安装Handlerbars
+
+`bower install --save handlebars`
+
+这样可以把Handlebars runtime添加到页面中，编译过得模板正依赖于此。
+
+###添加一个`templates`task###
+
+在gulpfile.js里添加
+
+```
+gulp.task('templates', function () {
+  return gulp.src('app/templates/**/*.hbs')
+    .pipe($.handlebars())
+    .pipe($.defineModule('plain'))
+    .pipe($.declare({
+      namespace: 'MyApp.templates' // change this to whatever you want
+    }))
+    .pipe(gulp.dest('.tmp/templates'));
+});
+```
+
+这样就会将`.hbs`文件编译成`.js`文件，并存放到`.tmp`目录下
+
+###在`html`和`serve`里均添加`templates`依赖###
+
+```
+gulp.task('html', ['styles', 'templates'], function () {
+  ...
+```
+
+```
+gulp.task('serve', ['styles', 'templates', 'fonts'], function () {
+    ...
+```
+
+###编辑`serve`task###
+
+在`serve`task里进行添加，使得`.hbs`文件的任何更改都会触发`templates`task，每当有一个`.js`文件在`.tmp/templates`生成，浏览器就会重新加载。
+
+
+```diff
+ gulp.task('serve', ['styles', 'templates', 'fonts'], function () {
+   ...
+   gulp.watch([
+     'app/*.html',
+     '.tmp/styles/**/*.css',
++    '.tmp/templates/**/*.js',
+     'app/scripts/**/*.js',
+     'app/images/**/*'
+   ]).on('change', reload);
+
+   gulp.watch('app/styles/**/*.scss', ['styles', reload]);
++  gulp.watch('app/templates/**/*.hbs', ['templates', reload]);
+   gulp.watch('bower.json', ['wiredep', 'fonts', reload]);
+ });
+```
+
+###使用Handlebars###
+
+在`app/templates`里写handlebars文件（`.hbs`文件），并在需要用到的HTML里像引用`.js`文件一样引用。
+
+例子
+
+在`app/templates`里写一个`foo.hbs`文件，内容如下
+
+`<p>hello handlebars!</p>`
+
+然后在需要引用该模板的页面加上：
+
+```
+<script src="bower_components/handlebars/handlebars.runtime.js"></script>
+<script src="templates/foo.js"></script>
+```
+
+通过下列语句渲染模板
+
+```
+var tpl = MyApp.templates.foo(); //MyApp.templates作为命名空间，可以在templates task里更改成任意名称
+$('#id').html(tpl);  //添加到你需要添加的地方
+```
+
+我的效果：
+
+<figure>
+	<img src="img/gulp-handlebars.png" />
+</figure>
+
+handlebars模板已被引用进来
+
+##最终的`gulpfile.js`文件##
 
 ```
 /*global -$ */
 'use strict';
+// generated on 2015-05-19 using generator-gulp-webapp 0.3.0
 var gulp = require('gulp');
 var $ = require('gulp-load-plugins')();
 var browserSync = require('browser-sync');
@@ -122,7 +253,7 @@ gulp.task('jshint', function () {
     .pipe($.if(!browserSync.active, $.jshint.reporter('fail')));
 });
 
-gulp.task('html', ['styles'], function () {
+gulp.task('html', ['styles', 'templates'], function () {
   var assets = $.useref.assets({searchPath: ['.tmp', 'app', '.']});
 
   return gulp.src('app/*.html')
@@ -164,9 +295,19 @@ gulp.task('extras', function () {
   }).pipe(gulp.dest('dist'));
 });
 
+gulp.task('templates', function () {
+  return gulp.src('app/templates/**/*.hbs')
+    .pipe($.handlebars())
+    .pipe($.defineModule('plain'))
+    .pipe($.declare({
+      namespace: 'MyApp.templates' // change this to whatever you want
+    }))
+    .pipe(gulp.dest('.tmp/templates'));
+});
+
 gulp.task('clean', require('del').bind(null, ['.tmp', 'dist']));
 
-gulp.task('serve', ['styles', 'fonts'], function () {
+gulp.task('serve', ['styles', 'templates', 'fonts'], function () {
   browserSync({
     notify: false,
     port: 9000,
@@ -181,13 +322,15 @@ gulp.task('serve', ['styles', 'fonts'], function () {
   // watch for changes
   gulp.watch([
     'app/*.html',
+    '.tmp/css/**/*.css',
+    '.tmp/templates/**/*.js',
     'app/js/**/*.js',
     'app/img/**/*',
-	'app/tpl/*',
     '.tmp/fonts/**/*'
   ]).on('change', reload);
 
   gulp.watch('app/css/**/*.css', ['styles']);
+  gulp.watch('app/templates/**/*.hbs', ['templates', reload]);
   gulp.watch('app/fonts/**/*', ['fonts']);
   gulp.watch('bower.json', ['wiredep', 'fonts']);
 });
@@ -213,31 +356,6 @@ gulp.task('default', ['clean'], function () {
 
 ```
 
-
-目录说明：
-
-- .tmp：临时目录
-- app：开发的源代码目录
-- bower_components：通过bower下载下来的包
-- dist：生成用于发布的项目
-- node_modules：nodejs依赖包
-- test：测试文件的目录
-- .bowerrc：bower属性
-- .editorconfig：对开发工具的属性配置
-- .gitattributes：git属性的配置
-- .gitignore：git管理文件的配置
-- .jshintrc：JSHint配置
-- bower.json：bower依赖管理
-- gulpfile.js：gulp开发过程管理
-- package.json：项目依赖文件
-
-app目录下的结构说明：
-
-- css: 存放css文件
-- font：存放字体资源
-- img：存放图片资源
-- js：存放js源文件
-- tpl（自己添加）：存放模板文件
 
 ##运行##
 
