@@ -228,7 +228,6 @@ handlebars模板已被引用进来
 ```
 /*global -$ */
 'use strict';
-// generated on 2015-05-19 using generator-gulp-webapp 0.3.0
 var gulp = require('gulp');
 var $ = require('gulp-load-plugins')();
 var browserSync = require('browser-sync');
