@@ -10,6 +10,8 @@
 
 `handlebars`js模板引擎
 
+添加php server环境，方便前端mock假数据
+
 ##准备工作##
 
 
@@ -125,7 +127,8 @@ app目录下的结构说明：
 - font：存放字体资源
 - img：存放图片资源
 - js：存放js源文件
-- templates（自己添加）：存放模板文件
+- templates（自己添加）：存放模板文件   后面会详细说明
+- mock（自己添加）：存放模拟后台假数据的php  后面会详细说明
 
 ##添加Handlebars作为JS模板引擎##
 
