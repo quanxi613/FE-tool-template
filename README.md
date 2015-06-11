@@ -2,7 +2,13 @@
 
 自己攒了个前端开发模板，目的是提高前端开发效率，前后端分离
 
-使用`gulp`作为自动化构建工具，`yeoman`生成项目文件代码结构，`bower`做包管理器，`handlebars`js模板引擎
+使用`gulp`作为自动化构建工具
+
+`yeoman`生成项目文件代码结构
+
+`bower`做包管理器
+
+`handlebars`js模板引擎
 
 ##准备工作##
 
@@ -223,6 +229,136 @@ $('#id').html(tpl);  //添加到你需要添加的地方
 
 handlebars模板已被引用进来
 
+##添加php环境##
+
+在gulp中添加php开发环境，方便前端mock假数据
+
+使用gulp插件<a href="https://www.npmjs.com/package/gulp-connect-php" target="_blank">gulp-connect-php</a>
+
+神器啊简直~~
+
+注意：使用这个插件需要php在5.4.0以上
+
+npm安装`gulp-connect-php`
+
+```
+$ npm install --save-dev gulp-connect-php
+```
+
+其实只添加上面的插件，再在gulpfile里配置好就已经有了php环境了，但会造成引用样式路径出错，导致加载不了css等文件
+
+为了解决这个问题，需要gulp插件`http-proxy`，安装
+
+```
+$ npm install --save-dev http-proxy
+```
+
+综合上述两点，在`gulpfile`中添加如下内容：
+
+```
+var connect = require('gulp-connect-php');
+var httpProxy = require('http-proxy');
+
+gulp.task('php-serve', ['styles', 'fonts'], function () {
+    connect.server({
+        port: 9001,   //端口号可以自定义
+        base: 'app/',
+        open: false
+    });
+
+    var proxy = httpProxy.createProxyServer({});
+
+    browserSync({
+        notify: false,
+        port  : 9000,
+        server: {
+            baseDir   : ['.tmp', 'app'],
+            routes    : {
+                '/bower_components': 'bower_components'
+            },
+            middleware: function (req, res, next) {     //给server添加一个middleware，可以观察在请求时是否需要代理
+                var url = req.url;
+
+                if (!url.match(/^\/(css|fonts|bower_components)\//)) {
+                    proxy.web(req, res, { target: 'http://127.0.0.1:9001' });
+                } else {
+                    next();
+                }
+            }
+        }
+    });
+
+    // watch for changes
+    gulp.watch([
+        'app/*.html',
+        'app/*.php',
+        'app/js/**/*.js',
+        'app/img/**/*',
+        '.tmp/fonts/**/*'
+    ]).on('change', reload);
+
+    gulp.watch('app/css/**/*.css', ['styles']);
+    gulp.watch('app/fonts/**/*', ['fonts']);
+    gulp.watch('bower.json', ['wiredep', 'fonts']);
+});
+```
+
+通过上面的折腾，运行`gulp php-serve`就可以开一个能运行php的server了~~
+
+接下来添加smarty模板
+
+从官网下载smarty，将文件夹拷贝至app下
+
+在app下新建文件夹`templates`、`templates_c`、`configs`，其中`templates`存放模板文件，`configs`存放smarty配置文件
+
+在`configs`里添加配置文件`smarty.config.php`，这样可以方便php引用
+
+```
+<?php
+    //Smarty PHP configuration
+     
+    define('REAL_PATH', dirname(dirname(__FILE__)));
+ 
+    require_once(REAL_PATH.'/smarty/libs/Smarty.class.php');
+
+    $smarty=new Smarty();
+ 
+    $smarty->setCacheDir(REAL_PATH.'\cache');
+    $smarty->setConfigDir(REAL_PATH.'\configs');
+    $smarty->setPluginsDir(REAL_PATH.'\plugins'); 
+    $smarty->setTemplateDir(REAL_PATH.'\templates');
+    $smarty->setCompileDir(REAL_PATH.'\templates_c');
+ 
+    //添加Smarty自带的插件库
+    $smarty->addPluginsDir(REAL_PATH.'\smarty\plugins');
+ 
+    //检测Smarty目录结构配置是否有效
+    // $smarty->testInstall();
+?>
+```
+
+在app下新建`mock`文件夹，里面主要存放模拟后台php假数据的`.php`文件
+
+比如新建一个`test.php`
+
+```
+<?php
+require('../configs/smarty.config.php');
+
+$smarty->left_delimiter="<%";
+$smarty->right_delimiter="%>";
+
+$smarty->assign("num", 100);
+
+$smarty->display('test.tpl');
+?>
+```
+
+那么在`test.tpl`中就可以通过`<%num%>`来获得从`test.php`传过去的数据
+
+浏览器中`localhost:端口号/mock/test.php`，即可出现`test.tpl`的页面效果，同时含有动态数据。
+
+
 ##最终的`gulpfile.js`文件##
 
 ```
@@ -232,6 +368,8 @@ var gulp = require('gulp');
 var $ = require('gulp-load-plugins')();
 var browserSync = require('browser-sync');
 var reload = browserSync.reload;
+var connect = require('gulp-connect-php');
+var httpProxy = require('http-proxy');
 
 gulp.task('styles', function () {
   return gulp.src('app/css/main.css')
@@ -334,6 +472,49 @@ gulp.task('serve', ['styles', 'templates', 'fonts'], function () {
   gulp.watch('bower.json', ['wiredep', 'fonts']);
 });
 
+gulp.task('php-serve', ['styles', 'fonts'], function () {
+    connect.server({
+        port: 9001,
+        base: 'app/',
+        open: false
+    });
+
+    var proxy = httpProxy.createProxyServer({});
+
+    browserSync({
+        notify: false,
+        port  : 9000,
+        server: {
+            baseDir   : ['.tmp', 'app'],
+            routes    : {
+                '/bower_components': 'bower_components'
+            },
+            middleware: function (req, res, next) {
+                var url = req.url;
+
+                if (!url.match(/^\/(css|fonts|bower_components)\//)) {
+                    proxy.web(req, res, { target: 'http://127.0.0.1:9001' });
+                } else {
+                    next();
+                }
+            }
+        }
+    });
+
+    // watch for changes
+    gulp.watch([
+        'app/*.html',
+        'app/*.php',
+        'app/js/**/*.js',
+        'app/img/**/*',
+        '.tmp/fonts/**/*'
+    ]).on('change', reload);
+
+    gulp.watch('app/css/**/*.css', ['styles']);
+    gulp.watch('app/fonts/**/*', ['fonts']);
+    gulp.watch('bower.json', ['wiredep', 'fonts']);
+});
+
 // inject bower components
 gulp.task('wiredep', function () {
   var wiredep = require('wiredep').stream;
@@ -358,7 +539,7 @@ gulp.task('default', ['clean'], function () {
 
 ##运行##
 
-输入命令行
+###输入命令行
 
 `gulp serve`
 
@@ -370,7 +551,15 @@ gulp.task('default', ['clean'], function () {
 
 任何文件的改动都会自动刷新浏览器
 
-编译文件
+###输入命令行
+
+`gulp php-serve`
+
+浏览器会自动打开app下的index.php，localhost：8090 (可在gulpfile.js修改端口号)
+
+同样的，任何文件的改动都会自动刷新浏览器
+
+##编译文件##
 
 `gulp build`
 
