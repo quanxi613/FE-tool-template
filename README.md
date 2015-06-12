@@ -54,12 +54,6 @@
 
 输入`gulp -v`，查看版本号确保正确安装
 
-接着将gulp安装到项目本地
-
-`npm install --save-dev gulp`
-
-这里使用`--save-dev`来更新package.json文件，更新devDependencies值，表明项目需要依赖gulp
-
 ###安装yeoman###
 
 yeoman：在web项目立项阶段用来生成项目的文件、代码结构，包括代码校验、测试和压缩等功能。
@@ -74,6 +68,12 @@ bower：web的包管理器
 
 
 ##正式开始##
+
+###将gulp安装到项目
+
+`npm install --save-dev gulp`
+
+这里使用`--save-dev`来更新package.json文件，更新devDependencies值，表明项目需要依赖gulp
 
 ###用gulp-webapp生成项目目录###
 
