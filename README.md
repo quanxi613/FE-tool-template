@@ -290,7 +290,8 @@ gulp.task('templates', function () {
     .pipe($.declare({
       namespace: 'MyApp.templates' // change this to whatever you want
     }))
-    .pipe(gulp.dest('.tmp/templates'));
+    .pipe(gulp.dest('.tmp/templates'))
+    .pipe(gulp.dest('dist/templates'));
 });
 ```
 
