@@ -309,6 +309,8 @@ gulp.task('serve', ['styles', 'templates', 'fonts'], function () {
     ...
 ```
 
+
+
 ###编辑`serve`task###
 
 在`serve`task里进行添加，使得`.hbs`文件的任何更改都会触发`templates`task，每当有一个`.js`文件在`.tmp/templates`生成，浏览器就会重新加载。
@@ -384,6 +386,47 @@ $('#id').html(tpl);  //添加到你需要添加的地方
 handlebars模板已被引用进来
 
 
+##添加less
+
+```
+npm install gulp-less --save-dev
+```
+
+修改gulpfile.js的以下内容：
+
+```
+gulp.task('styles', function () {
+  return gulp.src('app/css/**/*.less')
+    .pipe($.sourcemaps.init())
+     .pipe($.less({
+       paths: ['.']
+     }))
+     .pipe($.postcss([
+       require('autoprefixer-core')({browsers: ['last 1 version']})
+     ]))
+    .pipe($.sourcemaps.write())
+    .pipe(gulp.dest('.tmp/css'))
+    .pipe(reload({stream: true}));
+});
+
+gulp.task('wiredep', function () {
+  var wiredep = require('wiredep').stream;
+
+  gulp.src('app/css/**/*.less')
+    .pipe(wiredep({
+      ignorePath: /^(\.\.\/)+/
+    }))
+    .pipe(gulp.dest('app/css'));
+
+  gulp.src('app/**/*.html')
+    .pipe(wiredep({
+      exclude: ['bootstrap/dist'],
+      ignorePath: /^(\.\.\/)*\.\./
+    }))
+    .pipe(gulp.dest('app'));
+});
+```
+
 ##最终的`gulpfile.js`文件##
 
 ```
@@ -397,11 +440,14 @@ var connect = require('gulp-connect-php');
 var httpProxy = require('http-proxy');
 
 gulp.task('styles', function () {
-  return gulp.src('app/css/main.css')
+  return gulp.src('app/css/**/*.less')
     .pipe($.sourcemaps.init())
-    .pipe($.postcss([
-      require('autoprefixer-core')({browsers: ['last 1 version']})
-    ]))
+     .pipe($.less({
+       paths: ['.']
+     }))
+     .pipe($.postcss([
+       require('autoprefixer-core')({browsers: ['last 1 version']})
+     ]))
     .pipe($.sourcemaps.write())
     .pipe(gulp.dest('.tmp/css'))
     .pipe(reload({stream: true}));
@@ -538,6 +584,7 @@ gulp.task('php-serve', ['styles', 'fonts'], function () {
     ]).on('change', reload);
 
     gulp.watch('app/css/**/*.css', ['styles']);
+    gulp.watch('app/css/**/*.less', ['styles', reload]);
     gulp.watch('app/templates/**/*.hbs', ['templates', reload]);
     gulp.watch('app/fonts/**/*', ['fonts']);
     gulp.watch('bower.json', ['wiredep', 'fonts']);
@@ -547,8 +594,15 @@ gulp.task('php-serve', ['styles', 'fonts'], function () {
 gulp.task('wiredep', function () {
   var wiredep = require('wiredep').stream;
 
-  gulp.src('app/*.html')
+  gulp.src('app/css/**/*.less')
     .pipe(wiredep({
+      ignorePath: /^(\.\.\/)+/
+    }))
+    .pipe(gulp.dest('app/css'));
+
+  gulp.src('app/**/*.html')
+    .pipe(wiredep({
+      exclude: ['bootstrap/dist'],
       ignorePath: /^(\.\.\/)*\.\./
     }))
     .pipe(gulp.dest('app'));
