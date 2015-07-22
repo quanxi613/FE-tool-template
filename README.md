@@ -12,7 +12,7 @@
 
 添加php server环境，方便前端mock假数据
 
-添加`less`做CSS预处理器
+添加`less`做为CSS预处理器
 
 ##准备工作##
 
