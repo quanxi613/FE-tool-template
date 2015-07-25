@@ -6,7 +6,7 @@
 
 `yeoman`生成项目文件代码结构
 
-`bower`做包管理器
+`bower`用做包管理器
 
 `handlebars`js模板引擎
 
