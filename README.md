@@ -221,7 +221,7 @@ gulp.task('php-serve', ['styles', 'fonts'], function () {
 <?php
     //Smarty PHP configuration
      
-    define('REAL_PATH', dirname(dirname(__FILE__)));
+    define('REAL_PATH', dirname(__FILE__));
  
     require_once(REAL_PATH.'/smarty/libs/Smarty.class.php');
 
