@@ -8,7 +8,7 @@
 
 `bower`用做包管理器
 
-`handlebars`js模板引擎
+`handlebars`作为js模板引擎
 
 添加php server环境，方便前端mock假数据
 
